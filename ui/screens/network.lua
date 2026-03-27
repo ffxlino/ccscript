@@ -24,12 +24,13 @@ function screen.render(termObj, state)
       termObj.write("...\n")
       break
     end
+    local caps = dev.capabilities or {}
     local flags = {}
-    if dev.capabilities.inventory then flags[#flags + 1] = "INV" end
-    if dev.capabilities.fluids then flags[#flags + 1] = "FLD" end
-    if dev.capabilities.energy then flags[#flags + 1] = "ENG" end
-    if dev.capabilities.modem then flags[#flags + 1] = "NET" end
-    if dev.capabilities.monitor then flags[#flags + 1] = "MON" end
+    if caps.inventory then flags[#flags + 1] = "INV" end
+    if caps.fluids then flags[#flags + 1] = "FLD" end
+    if caps.energy then flags[#flags + 1] = "ENG" end
+    if caps.modem then flags[#flags + 1] = "NET" end
+    if caps.monitor then flags[#flags + 1] = "MON" end
     local class = dev.class and ("{" .. dev.class .. "}") or ""
     termObj.write(clip(("- %s [%s]%s %s"):format(id, dev.type, class, table.concat(flags, ",")), w) .. "\n")
   end

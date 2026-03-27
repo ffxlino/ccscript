@@ -73,9 +73,13 @@ end
 --- Micro layout: 2 строки хрома (вкладки 1-6 + панель < Pg TAB >), остальное — тело.
 local function drawMicroChrome(self, out, uiState, width, height, regions)
   regions = regions or {}
-  local y1, y2 = 1, 2
-  local bodyTop = 3
-  local bodyLines = math.max(1, height - 2)
+  local chromeRows = 2
+  if height < 2 then
+    chromeRows = 1
+  end
+  local y1, y2 = 1, math.min(2, height)
+  local bodyTop = math.min(chromeRows + 1, math.max(1, height))
+  local bodyLines = math.max(1, height - chromeRows)
 
   out.setCursorPos(1, y1)
   local row1 = "123456"
@@ -92,47 +96,80 @@ local function drawMicroChrome(self, out, uiState, width, height, regions)
     out.write(string.rep(" ", width - (startX + #row1 - 1)))
   end
 
-  local tabName = shortName(uiState.tabs[uiState.selectedTab] or "")
-  local bar = string.format("< P%d %s >", uiState.page or 1, tabName)
-  if #bar > width then
-    bar = string.format("<P%d>", uiState.page or 1)
-  end
-  out.setCursorPos(1, y2)
-  drawLine(out, width, bar)
-  if string.sub(bar, 1, 1) == "<" then
-    addRegion(regions, 1, y2, 1, y2, "page_prev", nil)
-  end
-  local gtCol = #bar
-  if gtCol >= 1 and string.sub(bar, gtCol, gtCol) == ">" then
-    addRegion(regions, gtCol, y2, gtCol, y2, "page_next", nil)
+  if chromeRows >= 2 then
+    local tabName = shortName(uiState.tabs[uiState.selectedTab] or "")
+    local bar = string.format("< P%d %s >", uiState.page or 1, tabName)
+    if #bar > width then
+      bar = string.format("<P%d>", uiState.page or 1)
+    end
+    out.setCursorPos(1, y2)
+    drawLine(out, width, bar)
+    if string.sub(bar, 1, 1) == "<" then
+      addRegion(regions, 1, y2, 1, y2, "page_prev", nil)
+    end
+    local gtCol = #bar
+    if gtCol >= 1 and string.sub(bar, gtCol, gtCol) == ">" then
+      addRegion(regions, gtCol, y2, gtCol, y2, "page_next", nil)
+    end
   end
 
   return bodyTop, bodyLines, regions
 end
 
---- Обычные вкладки + опциональная сенсорная строка с < ... >
+--- Обычные вкладки (одна строка, обрезка по ширине — иначе CC переносит и «съедает» экран)
 local function drawNormalChrome(self, out, uiState, width, height, compact, regions)
   local x = 1
   local y = 1
   out.setCursorPos(1, y)
   local hitboxes = {}
-  local function writeChunk(text, tabIndex)
-    out.write(text)
-    if tabIndex then
-      hitboxes[#hitboxes + 1] = { index = tabIndex, x1 = x, x2 = x + #text - 1, y = y }
-    end
-    x = x + #text
+  local rowText = {}
+  local function appendText(text, tabIndex)
+    rowText[#rowText + 1] = { text = text, tabIndex = tabIndex }
   end
 
-  writeChunk(compact and "T:" or "Tabs:")
+  appendText(compact and "T:" or "Tabs:")
   for i, tab in ipairs(uiState.tabs) do
     local label = compact and shortName(tab) or tab
     if i == uiState.selectedTab then
-      writeChunk("[" .. label .. "]", i)
+      appendText("[" .. label .. "]", i)
     else
-      writeChunk(" " .. label .. " ", i)
+      appendText(" " .. label .. " ", i)
     end
   end
+  local flat = {}
+  for _, seg in ipairs(rowText) do
+    flat[#flat + 1] = seg.text
+  end
+  local full = table.concat(flat)
+  if #full > width then
+    full = string.sub(full, 1, math.max(1, width - 1)) .. "~"
+    hitboxes = {}
+    x = 1
+    for _, seg in ipairs(rowText) do
+      local t = seg.text
+      if x + #t - 1 > width then
+        break
+      end
+      if seg.tabIndex then
+        hitboxes[#hitboxes + 1] = { index = seg.tabIndex, x1 = x, x2 = x + #t - 1, y = y }
+      end
+      x = x + #t
+    end
+  else
+    x = 1
+    for _, seg in ipairs(rowText) do
+      if seg.tabIndex then
+        hitboxes[#hitboxes + 1] = {
+          index = seg.tabIndex,
+          x1 = x,
+          x2 = x + #seg.text - 1,
+          y = y,
+        }
+      end
+      x = x + #seg.text
+    end
+  end
+  drawLine(out, width, full)
   out.write("\n")
 
   local helpY = 2
@@ -159,7 +196,7 @@ local function drawNormalChrome(self, out, uiState, width, height, compact, regi
     addRegion(regions, box.x1, box.y, box.x2, box.y, "tab", box.index)
   end
 
-  return 3, math.max(2, height - 2)
+  return 3, math.max(1, height - 2)
 end
 
 function appUi.new(settings)
@@ -179,9 +216,15 @@ function appUi.render(self, uiState, viewModel)
 
   local maxH = self.settings.uiUltraIfHeightLTE or 18
   local maxW = self.settings.uiUltraIfWidthLTE or 24
+  local tabEst = 6
+  for _, t in ipairs(uiState.tabs) do
+    tabEst = tabEst + #t + 4
+  end
   local ultra = self.settings.uiForceMicroLayout
     or (height <= maxH)
     or (width <= maxW)
+    or (height < 3)
+    or (tabEst > width)
   local compact = ultra or width < 42 or height < 16
 
   local regions = {}
@@ -191,8 +234,7 @@ function appUi.render(self, uiState, viewModel)
   if ultra then
     bodyTop, bodyLines = drawMicroChrome(self, out, uiState, width, height, regions)
   else
-    drawNormalChrome(self, out, uiState, width, height, compact, regions)
-    bodyTop, bodyLines = 3, math.max(2, height - 2)
+    bodyTop, bodyLines = drawNormalChrome(self, out, uiState, width, height, compact, regions)
   end
 
   local tab = uiState:currentTabName()

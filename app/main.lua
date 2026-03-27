@@ -76,7 +76,12 @@ function app.run()
       nextSnapshotAt = now + settings.snapshotIntervalSec
     end
 
-    ui:render(uiState, viewModel)
+    local okRender, errRender = pcall(ui.render, ui, uiState, viewModel)
+    if not okRender then
+      printError("UI render error:")
+      printError(tostring(errRender))
+      safeLogInfo(logger, "UI render: " .. tostring(errRender))
+    end
 
     local event = { os.pullEvent() }
     local handled, command = ui:handleEvent(uiState, event)

@@ -47,6 +47,11 @@ Important:
 - Tune “micro” mode with `uiUltraIfHeightLTE` / `uiUltraIfWidthLTE` in `config/settings.lua`.
 - **`uiForceMicroLayout`**: set `true` when the physical monitor is small (e.g. 4×3 blocks) but `getSize()` is still large; forces the `123456` + `< Pn TAB >` layout.
 
+### If the monitor shows only the tab bar (black below)
+
+- ComputerCraft wraps long text: a full `Tabs: network resources ...` line wider than the screen used to push all content below the visible area. The UI now **clips** that line or switches to **micro** (`123456`) when the bar is too long (`tabEst > width`).
+- Update all files from GitHub / run `install.lua` again.
+
 ### What to test on a 4×3 monitor
 
 - Tap **1–6** on the top row: content switches (NET / RES / RCP / CAL / PWR / LOG).
