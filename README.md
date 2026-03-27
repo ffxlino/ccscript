@@ -43,6 +43,14 @@ Important:
 - Works with small monitor grids (for example `3x5`, `4x4`) in compact mode.
 - Minimum layout requirements are configurable in `config/settings.lua` via `uiMinWidth` and `uiMinHeight`.
 - If monitor is small, UI automatically switches to compact mode.
+- **Small grid (e.g. 4 wide × 3 tall blocks):** two-line chrome — row `123456` (tap digit = tab), row `< Pn TAB >` (tap `<` / `>` = page). Keys: `1`–`6`, `n`/`p`, `,`/`.` for page, arrows for tab, `q` quit.
+- Tune “micro” mode with `uiUltraIfHeightLTE` / `uiUltraIfWidthLTE` in `config/settings.lua`.
+
+### What to test on a 4×3 monitor
+
+- Tap **1–6** on the top row: content switches (NET / RES / RCP / CAL / PWR / LOG).
+- Tap **`<` / `>`** on the second row: page changes on list tabs.
+- Optional keyboard on advanced computer: digits, `n`/`p`, left/right.
 
 ## Saved expansion draft
 

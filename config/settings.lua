@@ -13,8 +13,12 @@ local settings = {
   networkSnapshotPath = "data/network_state.json",
   eventsLogPath = "logs/events.log",
   monitorPreferredScale = 0.5,
-  uiMinWidth = 30,
-  uiMinHeight = 12,
+  -- Меньше значения — крупнее текст на маленьком мониторе (например 4×3 блока).
+  uiMinWidth = 18,
+  uiMinHeight = 6,
+  -- Если высота/ширина в символах меньше порога — 2 строки хрома (удобно для монитора 4×3 блока).
+  uiUltraIfHeightLTE = 18,
+  uiUltraIfWidthLTE = 24,
 }
 
 return settings

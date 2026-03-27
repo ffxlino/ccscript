@@ -1,16 +1,27 @@
 local screen = {}
 
+local function clip(line, maxW)
+  if not maxW or #line <= maxW then
+    return line
+  end
+  return string.sub(line, 1, math.max(3, maxW - 1)) .. "~"
+end
+
 function screen.render(termObj, state)
   local net = state.networkSummary or {}
-  termObj.write(("Net C:%d T:%d M:%d Md:%d/%d\n")
-    :format(net.computers or 0, net.turtles or 0, net.monitors or 0, net.wiredModems or 0, net.wirelessModems or 0))
-  termObj.write("Connected devices:\n")
+  local w = state.maxLineWidth
+  termObj.write(clip(("Net C:%d T:%d M:%d Md:%d/%d"):format(
+    net.computers or 0, net.turtles or 0, net.monitors or 0, net.wiredModems or 0, net.wirelessModems or 0
+  ), w) .. "\n")
+  if not state.ultraCompact then
+    termObj.write("Connected devices:\n")
+  end
   local count = 0
   local limit = state.pageSize or 12
   for id, dev in pairs(state.devices or {}) do
     count = count + 1
     if count > limit then
-      termObj.write("...more omitted\n")
+      termObj.write("...\n")
       break
     end
     local flags = {}
@@ -20,7 +31,7 @@ function screen.render(termObj, state)
     if dev.capabilities.modem then flags[#flags + 1] = "NET" end
     if dev.capabilities.monitor then flags[#flags + 1] = "MON" end
     local class = dev.class and ("{" .. dev.class .. "}") or ""
-    termObj.write(("- %s [%s]%s %s\n"):format(id, dev.type, class, table.concat(flags, ",")))
+    termObj.write(clip(("- %s [%s]%s %s"):format(id, dev.type, class, table.concat(flags, ",")), w) .. "\n")
   end
   if count == 0 then
     termObj.write("No peripherals found.\n")
