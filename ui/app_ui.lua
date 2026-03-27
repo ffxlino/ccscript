@@ -179,7 +179,9 @@ function appUi.render(self, uiState, viewModel)
 
   local maxH = self.settings.uiUltraIfHeightLTE or 18
   local maxW = self.settings.uiUltraIfWidthLTE or 24
-  local ultra = (height <= maxH) or (width <= maxW)
+  local ultra = self.settings.uiForceMicroLayout
+    or (height <= maxH)
+    or (width <= maxW)
   local compact = ultra or width < 42 or height < 16
 
   local regions = {}

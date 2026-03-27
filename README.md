@@ -45,6 +45,7 @@ Important:
 - If monitor is small, UI automatically switches to compact mode.
 - **Small grid (e.g. 4 wide × 3 tall blocks):** two-line chrome — row `123456` (tap digit = tab), row `< Pn TAB >` (tap `<` / `>` = page). Keys: `1`–`6`, `n`/`p`, `,`/`.` for page, arrows for tab, `q` quit.
 - Tune “micro” mode with `uiUltraIfHeightLTE` / `uiUltraIfWidthLTE` in `config/settings.lua`.
+- **`uiForceMicroLayout`**: set `true` when the physical monitor is small (e.g. 4×3 blocks) but `getSize()` is still large; forces the `123456` + `< Pn TAB >` layout.
 
 ### What to test on a 4×3 monitor
 
